@@ -561,10 +561,12 @@ class lvb_qqqq_dCSV {
 		virtual void      Category_Fat_Plot( int cat,int fat, int idx) ;
 		virtual void      Category_Higgs_Plot( int cat, int higg, int idx) ;
 		// 3. Transverse Mass Calculation   
-		virtual  void    toptag_MTCalculation( ) ;
-		virtual  void    Higgstag_MTCalculation( int topbjet)  ;
+		virtual  void    toptag_MTCalculation(int Cat ) ;
+		virtual  void    Higgstag_MTCalculation()  ;
 		virtual  void     genlvl_MTCalculation(int type ) ;
-
+		virtual  void     WWtag_MTCalculation() ;
+          virtual  void     WfatV_MTCalculation( ) ;
+          virtual  void     WfatIII_MTCalculation( ) ;          
 		//////////////
 		virtual void      Define_Mt_Histo();  // for transverse mass histo only...delete it as soon for new histo
 
@@ -1039,7 +1041,7 @@ void  lvb_qqqq_dCSV::Define_Tag_Jet_Histo()
 				//cout<<"h_tag_Mass[" <<Sj<<"].name() : "<< h_tag_Mass.at(Sj)->GetName()<<endl; 						
 			}                                
 			if(Tk == 3 )  {
-				h_tag_SD.at(Sj)      = new TH1F(tag_name,tag_title, 300, 0, 1000.0);       
+				h_tag_SD.at(Sj)      = new TH1F(tag_name,tag_title, 2000, 0, 1000.0);       
 				h_tag_SD.at(Sj)       ->GetYaxis()->SetTitle("Events");
 				//cout<<"h_tag_SD[" <<Sj<<"].name() : "<< h_tag_SD.at(Sj)->GetName()<<endl;				
 			}            
@@ -1209,12 +1211,12 @@ void lvb_qqqq_dCSV::Category_Object_Histo()
 					//cout<<"h_Histo_Eta["<<u<<"]["<<j<<"].name() : "<< h_Histo_Eta.at(u).at(j)->GetName()<<endl;					
 				}      
 				if(k == 2 ) {
-					h_Histo_Mass.at(u).at(j)     = new TH1F(Histo_name,Histo_title, 300, 0, 1000.0);   
+					h_Histo_Mass.at(u).at(j)     = new TH1F(Histo_name,Histo_title, 500, 0, 1000.0);   
 					h_Histo_Mass.at(u).at(j)      ->GetYaxis()->SetTitle("Events");
 					//cout<<"h_Histo_Mass["<<u<<"]["<<j<<"].name() : "<< h_Histo_Mass.at(u).at(j)->GetName()<<endl;						
 				}                                
 				if(k == 3 )  {
-					h_Histo_SD.at(u).at(j)        = new TH1F(Histo_name,Histo_title, 300, 0, 1000.0);
+					h_Histo_SD.at(u).at(j)        = new TH1F(Histo_name,Histo_title, 500, 0, 1000.0);
 					h_Histo_SD.at(u).at(j)        ->GetYaxis()->SetTitle("Events");
 					//cout<<"h_Histo_SD["<<u<<"]["<<j<<"].name() : "<< h_Histo_SD.at(u).at(j)->GetName()<<endl;						
 				}            
@@ -1234,7 +1236,7 @@ void lvb_qqqq_dCSV::Category_Object_Histo()
 void lvb_qqqq_dCSV::Category_Object_MtHisto()
 {
 	char Histo_name[100], Histo_title[100];
-	string TransM ;
+	string TransM, transM1 , transM2 ;
 	string  obj[5]  ;
 	int x ;
 	int f = 0 ;
@@ -1272,9 +1274,9 @@ void lvb_qqqq_dCSV::Category_Object_MtHisto()
 		TransM = TransM + "MET" ;
 		for ( int j = f-2; j > -1; j -- )
 		{
+               transM1 = "" ;		
+               transM2 = "" ;		               
 			if ( obj[j] == "no" )                                continue;    
-			if(  obj[j] == "b" && ( u == 2 || u == 3)  )  continue; 
-			if( obj[j] == "HFat" && u == 4 )               continue ;     
 			if( obj[j] == "Top" )                               TransM = TransM + obj[j] ;
 			if(obj[j] == "Higgs")                               TransM = TransM + obj[j] ;
 			if( obj[j] == "mu" )                                TransM = TransM + obj[j] ;   
@@ -1286,12 +1288,15 @@ void lvb_qqqq_dCSV::Category_Object_MtHisto()
 					TransM = TransM + obj[j] ;
 				}
 			}
-
-			sprintf( Histo_name, "Cat%d_Mt(%s)", x , TransM.c_str() ) ;
-			sprintf( Histo_title, "Cat%d_Mt(%s) Distribution", x , TransM.c_str() ) ;			
-			h_Histo_Mt.at(u).at(j)         = new TH1F(Histo_name,Histo_title, 500, 0, 1000.0);
+			transM2 = TransM ;
+			if(  obj[j] == "b" && ( u == 2 || u == 3)  )  transM2 = obj[j] + obj[j-1]; 
+			if( obj[j] == "HFat" && u == 4 )               transM2 = obj[j] + obj[j-1];    
+			               
+			sprintf( Histo_name, "Cat%d_Mt(%s)", x , transM2.c_str() ) ;
+			sprintf( Histo_title, "Cat%d_Mt(%s) Distribution", x , transM2.c_str() ) ;			
+			h_Histo_Mt.at(u).at(j)         = new TH1F(Histo_name,Histo_title, 1500, 0, 3000.0);
 			h_Histo_Mt.at(u).at(j)         ->GetYaxis()->SetTitle("Events");   
-			//cout<<"h_Histo_Mt["<<u<<"]["<<j<<"].name() : "<< h_Histo_Mt.at(u).at(j)->GetName()<<endl;			
+			cout<<"h_Histo_Mt["<<u<<"]["<<j<<"].name() : "<< h_Histo_Mt.at(u).at(j)->GetName()<<endl;			
 		} 
 		TransM = "" ;
 	}
@@ -1923,7 +1928,7 @@ void  lvb_qqqq_dCSV::Top_selection( )  // tag = 0 for Higgs & tag = 1 for top, W
 		if ((*AK8_JetPt)[jt] < 400.0) continue ;
 		if (tau32 > 0.65 ) continue ;
 		if (tau32 < 0.02 ) continue ;
-		if ( SDmass <130.0 || SDmass > 210.0 ) continue ;
+		if ( SDmass <140.0 || SDmass > 210.0 ) continue ;
 
 		for(int jg = 0 ; jg < (*n_AK8puppiSDSJ)[jt] ; jg ++ )
 		{
@@ -1965,13 +1970,13 @@ void  lvb_qqqq_dCSV::Fatjet_selection()
 {
 	int g3 = -1 ;
 	float dR2 = 0.0 ;  
+	
 	for (int g = 0 ; g < n_AK8Jet.size() ; g ++ )
 	{
 		g3 = n_AK8Jet[g]  ;
 		if( g3 == -1 ) continue ;
 		dR2 =((*AK8_puppiTau2)[g3]/(*AK8_puppiTau1)[g3]) ;
-		if (dR2 > 0.80) continue ;
-		if (dR2 < 0.02) continue ;     
+          if ( ! (0.05 <  dR2 && dR2 < 0.80) ) continue ;
 		if ( (*AK8_puppiSDMass)[g3] > 65.0 && (*AK8_puppiSDMass)[g3] < 210.0 ) continue ;
 		//if ( (*AK8_JetPrunedMass)[g3] > 65.0 && (*AK8_puppiSDMass)[g3] < 210.0 ) continue ;
 		fat_jet.push_back(g3) ;
@@ -2002,7 +2007,7 @@ void     lvb_qqqq_dCSV::Wtag0_Category()
 
 void     lvb_qqqq_dCSV::Wtag1_Category()
 {
-	if (topjet.size() == 1 ) {
+	if (topjet.size() != 0 ) {
 		top_Wjet_Plots() ; 
 		eventI ++ ;		                 		
 	}
@@ -2219,6 +2224,7 @@ void  lvb_qqqq_dCSV::Fatjet_Plots(int topbjet )
 
 		tau =  ((*AK8_puppiTau2)[t2]/(*AK8_puppiTau1)[t2]) ;
 		h_tag_tau.at(k+8)  -> Fill(tau) ;
+  
 		Ws.SetPtEtaPhiE((*AK8_JetPt)[t2],(*AK8_JetEta)[t2],(*AK8_JetPhi)[t2],(*AK8_JetEn)[t2]);
 		mass_puppi = Ws.M();
 		h_tag_Mass.at(k+8) ->Fill(mass_puppi);
@@ -2402,14 +2408,343 @@ void lvb_qqqq_dCSV::TagJets_dRPlots()
 
 // ============Mt Calculation ========================
 
-void  lvb_qqqq_dCSV::toptag_MTCalculation( ) 
+void  lvb_qqqq_dCSV::WfatIII_MTCalculation( ) 
 {
-	int top = topjet[0] ;
-	int W;
-	if ( W_boson.size() == 0 )    W = fat_jet[0] ;
-	if ( W_boson.size() == 1 )    W  = W_boson[0] ;
+	int top          =   CatIII_Objects[0] ;  	
+	int higgs2      =   CatIII_Objects[1] ;  
+	int topbjet     =   CatIII_Objects[2] ;  	
+	int mu         =   CatIII_Objects[3] ;  	
+	
+	TLorentzVector v_higgs2, v_mu, v_topbjet, v_top ;
+	float MET_phi[4] ;
+	float Obj_phi[6] ;
 
-	int mu = n_Mu[0] ;
+	v_top.SetPtEtaPhiE((*AK8_JetPt)[top], (*AK8_JetEta)[top], (*AK8_JetPhi)[top], (*AK8_JetEn)[top] ) ;
+	v_higgs2.SetPtEtaPhiE((*AK8_JetPt)[higgs2], (*AK8_JetEta)[higgs2], (*AK8_JetPhi)[higgs2], (*AK8_JetEn)[higgs2] ) ;
+	v_topbjet.SetPtEtaPhiE((*jet_Pt)[topbjet], (*jet_Eta)[topbjet], (*jet_Phi)[topbjet], (*jet_En)[topbjet] ) ;
+	v_mu.SetPtEtaPhiE( (*mu_Pt)[mu], (*mu_Eta)[mu], (*mu_Phi)[mu], (*mu_En)[mu]);
+
+	float Et_top        =  v_top.Et() ;	
+	float Et_higgs2        =  v_higgs2.Et() ;
+	float Et_bjet          =   v_topbjet.Et() ;
+	float Et_mu          =    v_mu.Et() ;
+	double Et_sum       =   0.0 ;
+
+	float pT_top       =  (*AK8_JetPt)[top] ;
+	float pT_higgs2       =  (*AK8_JetPt)[higgs2] ;
+	float pT_bjet         =  (*jet_Pt)[topbjet] ;
+	float pT_mu         =  (*mu_Pt)[mu] ;
+	double pT_sum      =  0.0 ;
+
+	double  W_Trans                = 0.0 ;
+	double  top_Trans            = 0.0 ;  
+	double  higgs2_Trans            = 0.0 ;
+	double  TprimEt_Trans         = 0.0 ;
+	double  trans_mass             = 0.0 ;
+
+	// for cos(deltaPhi) calculation  
+		
+	//============ w.r.t MET ======
+	float  dPhi            =  delta_phi((*mu_Phi)[mu] , pf_METPhi) ;   // for muon & MET dphi
+	MET_phi[0]          =  pf_MET * Cos(dPhi) ;
+
+	dPhi                   =  delta_phi((*jet_Phi)[topbjet] , pf_METPhi)  ;   //  for topbjet & MET dphi
+	MET_phi[1]          =  pf_MET * Cos(dPhi) ;
+
+	dPhi                   =  delta_phi((*AK8_JetPhi)[higgs2] , pf_METPhi)  ;   //  for higgs2 & MET dphi
+	MET_phi[2]          =  pf_MET * Cos(dPhi) ;
+
+	dPhi                   =  delta_phi((*AK8_JetPhi)[top] , pf_METPhi)  ;   //  for top & MET dphi
+	MET_phi[3]          =  pf_MET * Cos(dPhi) ;
+
+
+  // ======= w.r.t each other ========
+	dPhi                   =  delta_phi((*AK8_JetPhi)[top], (*mu_Phi)[mu]) ;  ;   //  for top & muon dphi
+	Obj_phi[0]            =   pT_mu * Cos(dPhi) ;  
+	
+	dPhi                   =  delta_phi((*AK8_JetPhi)[top], (*AK8_JetPhi)[higgs2])  ; //  for top & higgs dphi
+	Obj_phi[1]            =   pT_higgs2 * Cos(dPhi) ;
+	
+	dPhi                   =  delta_phi( (*AK8_JetPhi)[top], (*jet_Phi)[topbjet])  ; //  for W & higgs dphi
+	Obj_phi[2]            =   pT_bjet * Cos(dPhi) ;	
+
+	dPhi                   =  delta_phi((*jet_Phi)[topbjet], (*mu_Phi)[mu])  ;   //  for topbjet & muon dphi
+	Obj_phi[3]            =  pT_mu * Cos(dPhi) ;
+			
+	dPhi                   =  delta_phi((*jet_Phi)[topbjet], (*AK8_JetPhi)[higgs2])  ; //  for topbjet & higgs2 dphi
+	Obj_phi[4]            =  pT_higgs2 * Cos(dPhi) ;
+		  
+	dPhi                   =  delta_phi((*AK8_JetPhi)[higgs2], (*mu_Phi)[mu]) ; //  for higgs & muon dphi
+	Obj_phi[5]            =  pT_mu * Cos(dPhi) ;
+
+
+	float  Dot_prod = 0.0   ;
+	
+	// ---------------Transverse mass---------------
+	//  for W transverse mass    
+	Et_sum = Et_sum + Et_mu  + pf_MET  ;
+	pT_sum  = pT_sum + ( pf_MET * pf_MET ) + (pT_mu * pT_mu) ;  
+	Dot_prod  =  Dot_prod +  2.0 * pT_mu * MET_phi[0] ;
+	W_Trans = fabs (( Et_sum * Et_sum) - ( pT_sum + Dot_prod) ) ;
+	trans_mass  = Sqrt ( W_Trans) ;
+	h_Histo_Mt.at(2).at(3) -> Fill( trans_mass) ;
+
+	//  for higgs2 transverse mass 
+	Et_sum               =      Et_sum +   Et_higgs2 ;
+	pT_sum              =       pT_sum + ( pT_higgs2* pT_higgs2 ) ;
+	Dot_prod             =      Dot_prod + 2.0 * pT_higgs2 *( MET_phi[2] + Obj_phi[5] ) ;
+	higgs2_Trans         =      fabs (( Et_sum * Et_sum)  - ( pT_sum + Dot_prod) )  ;
+	trans_mass           =      Sqrt ( higgs2_Trans) ;
+     h_Histo_Mt.at(2).at(2) -> Fill( trans_mass) ;
+
+	// for Tprime Transverse mass
+	Et_sum              =    Et_sum + Et_top + Et_bjet ;
+	pT_sum             =     pT_sum + (pT_top * pT_top) + (pT_bjet * pT_bjet);    
+	Dot_prod            =    Dot_prod +2.0 *pT_top* (MET_phi[3]+ Obj_phi[0]+ Obj_phi[1]+ Obj_phi[2]) +2.0 *pT_bjet* (MET_phi[1]+ Obj_phi[3]+ Obj_phi[4]) ;
+	TprimEt_Trans     =    fabs(( Et_sum * Et_sum)  - ( pT_sum + Dot_prod) ) ;
+	trans_mass         =     Sqrt ( TprimEt_Trans ) ;
+//	cout << "\nTop mass = " << trans_mass;
+	h_Histo_Mt.at(2).at(0) -> Fill( trans_mass) ;
+
+// for Top transverse mass
+    Et_sum                        =     0.0 + Et_top + Et_bjet ;
+    pT_sum                       =     0.0 + (pT_top * pT_top) + (pT_bjet * pT_bjet);            
+    Dot_prod                     =     0.0  +  2.0 *pT_top* Obj_phi[2] ;
+     top_Trans                   =     fabs (( Et_sum * Et_sum)  - ( pT_sum + Dot_prod) )  ;
+	trans_mass                 =    Sqrt ( top_Trans) ;
+     h_Histo_Mt.at(2).at(1)   -> Fill( trans_mass) ;
+	
+}
+
+
+void  lvb_qqqq_dCSV::WfatV_MTCalculation( ) 
+{
+	int higgs1      =  CatV_Objects[0] ;  	
+	int higgs2      =  CatV_Objects[1] ;  
+	int topbjet     =  CatV_Objects[2] ;  	
+	int mu         =     CatV_Objects[3] ;  	
+	TLorentzVector v_higgs2, v_mu, v_topbjet, v_higgs1 ;
+	float MET_phi[4] ;
+	float Obj_phi[6] ;
+
+	v_higgs1.SetPtEtaPhiE((*AK8_JetPt)[higgs1], (*AK8_JetEta)[higgs1], (*AK8_JetPhi)[higgs1], (*AK8_JetEn)[higgs1] ) ;
+	v_higgs2.SetPtEtaPhiE((*AK8_JetPt)[higgs2], (*AK8_JetEta)[higgs2], (*AK8_JetPhi)[higgs2], (*AK8_JetEn)[higgs2] ) ;
+	v_topbjet.SetPtEtaPhiE((*jet_Pt)[topbjet], (*jet_Eta)[topbjet], (*jet_Phi)[topbjet], (*jet_En)[topbjet] ) ;
+	v_mu.SetPtEtaPhiE( (*mu_Pt)[mu], (*mu_Eta)[mu], (*mu_Phi)[mu], (*mu_En)[mu]);
+
+	float Et_higgs1        =  v_higgs1.Et() ;	
+	float Et_higgs2        =  v_higgs2.Et() ;
+	float Et_bjet          =   v_topbjet.Et() ;
+	float Et_mu          =    v_mu.Et() ;
+	double Et_sum       =   0.0 ;
+
+	float pT_higgs1       =  (*AK8_JetPt)[higgs1] ;
+	float pT_higgs2       =  (*AK8_JetPt)[higgs2] ;
+	float pT_bjet         =  (*jet_Pt)[topbjet] ;
+	float pT_mu         =  (*mu_Pt)[mu] ;
+	double pT_sum      =  0.0 ;
+
+	double  W_Trans                = 0.0 ;
+	double  higgs1_Trans            = 0.0 ;  
+	double  higgs2_Trans            = 0.0 ;
+	double  TprimEt_Trans         = 0.0 ;
+	double  trans_mass             = 0.0 ;
+
+	// for cos(deltaPhi) calculation  
+		
+	//============ w.r.t MET ======
+	float  dPhi            =  delta_phi((*mu_Phi)[mu] , pf_METPhi) ;   // for muon & MET dphi
+	MET_phi[0]          =  pf_MET * Cos(dPhi) ;
+
+	dPhi                   =  delta_phi((*jet_Phi)[topbjet] , pf_METPhi)  ;   //  for topbjet & MET dphi
+	MET_phi[1]          =  pf_MET * Cos(dPhi) ;
+
+	dPhi                   =  delta_phi((*AK8_JetPhi)[higgs2] , pf_METPhi)  ;   //  for higgs2 & MET dphi
+	MET_phi[2]          =  pf_MET * Cos(dPhi) ;
+
+	dPhi                   =  delta_phi((*AK8_JetPhi)[higgs1] , pf_METPhi)  ;   //  for top & MET dphi
+	MET_phi[3]          =  pf_MET * Cos(dPhi) ;
+
+
+  // ======= w.r.t each other ========
+	dPhi                   =  delta_phi((*AK8_JetPhi)[higgs1], (*mu_Phi)[mu]) ;  ;   //  for top & muon dphi
+	Obj_phi[0]            =   pT_mu * Cos(dPhi) ;  
+	
+	dPhi                   =  delta_phi((*AK8_JetPhi)[higgs1], (*AK8_JetPhi)[higgs2])  ; //  for top & higgs dphi
+	Obj_phi[1]            =   pT_higgs2 * Cos(dPhi) ;
+	
+	dPhi                   =  delta_phi( (*AK8_JetPhi)[higgs1], (*jet_Phi)[topbjet])  ; //  for W & higgs dphi
+	Obj_phi[2]            =   pT_bjet * Cos(dPhi) ;	
+
+	dPhi                   =  delta_phi((*jet_Phi)[topbjet], (*mu_Phi)[mu])  ;   //  for topbjet & muon dphi
+	Obj_phi[3]            =  pT_mu * Cos(dPhi) ;
+			
+	dPhi                   =  delta_phi((*AK8_JetPhi)[higgs2], (*jet_Phi)[topbjet])  ; //  for topbjet & higgs2 dphi
+	Obj_phi[4]            =  pT_bjet * Cos(dPhi) ;
+		  
+	dPhi                   =  delta_phi((*AK8_JetPhi)[higgs2], (*mu_Phi)[mu]) ; //  for higgs & muon dphi
+	Obj_phi[5]            =  pT_mu * Cos(dPhi) ;
+
+
+	float  Dot_prod = 0.0   ;
+	
+	// ---------------Transverse mass---------------
+	//  for W transverse mass    
+	Et_sum = Et_sum + Et_mu  + pf_MET  ;
+	pT_sum  = pT_sum + ( pf_MET * pf_MET ) + (pT_mu * pT_mu) ;  
+	Dot_prod  =  Dot_prod +  2.0 * pT_mu * MET_phi[0] ;
+	W_Trans = fabs (( Et_sum * Et_sum) - ( pT_sum + Dot_prod) ) ;
+	trans_mass  = Sqrt ( W_Trans) ;
+	h_Histo_Mt.at(4).at(3) -> Fill( trans_mass) ;
+
+	//  for Top transverse mass 
+	Et_sum               =      Et_sum +   Et_bjet ;
+	pT_sum              =       pT_sum + ( pT_bjet* pT_bjet ) ;
+	Dot_prod             =      Dot_prod + 2.0 * pT_bjet *( MET_phi[1] + Obj_phi[3] ) ;
+	higgs1_Trans         =      fabs (( Et_sum * Et_sum)  - ( pT_sum + Dot_prod) )  ;
+	trans_mass           =      Sqrt ( higgs1_Trans) ;
+     h_Histo_Mt.at(4).at(2) -> Fill( trans_mass) ;
+
+	// for Tprime Transverse mass
+	Et_sum              =    Et_sum + Et_higgs1 + Et_higgs2 ;
+	pT_sum             =     pT_sum + (pT_higgs1 * pT_higgs1) + (pT_higgs2 * pT_higgs2);    
+	Dot_prod            =  Dot_prod +2.0*pT_higgs1*(MET_phi[3]+ Obj_phi[0]+ Obj_phi[1]+ Obj_phi[2]) +2.0*pT_higgs2*(MET_phi[2]+ Obj_phi[4]+ Obj_phi[5]) ;
+	TprimEt_Trans     =    fabs(( Et_sum * Et_sum)  - ( pT_sum + Dot_prod) ) ;
+	trans_mass         =     Sqrt ( TprimEt_Trans ) ;
+//	cout << "\nTop mass = " << trans_mass;
+	h_Histo_Mt.at(4).at(0) -> Fill( trans_mass) ;
+	
+	// for Higgs transverse mass
+    Et_sum                        =     0.0 + Et_higgs1 + Et_higgs2 ;
+    pT_sum                       =     0.0 + (pT_higgs1 * pT_higgs1) + (pT_higgs2 * pT_higgs2);            
+    Dot_prod                     =     0.0  +  2.0 *pT_higgs1* Obj_phi[1] ;
+     higgs2_Trans                   =     fabs (( Et_sum * Et_sum)  - ( pT_sum + Dot_prod) )  ;
+	trans_mass                 =    Sqrt ( higgs2_Trans) ;
+     h_Histo_Mt.at(4).at(1)   -> Fill( trans_mass) ;
+     
+}
+
+
+void  lvb_qqqq_dCSV::WWtag_MTCalculation() 
+{
+	int top = CatIV_Objects[0] ;  	
+	int higgs = CatIV_Objects[1] ;  
+	int topbjet = CatIV_Objects[2] ;  	
+	int mu = CatIV_Objects[3] ;  	
+	TLorentzVector v_higgs, v_mu, v_topbjet, v_top ;
+	float MET_phi[4] ;
+	float Obj_phi[6] ;
+
+	v_top.SetPtEtaPhiE((*AK8_JetPt)[top], (*AK8_JetEta)[top], (*AK8_JetPhi)[top], (*AK8_JetEn)[top] ) ;
+	v_higgs.SetPtEtaPhiE((*AK8_JetPt)[higgs], (*AK8_JetEta)[higgs], (*AK8_JetPhi)[higgs], (*AK8_JetEn)[higgs] ) ;
+	v_topbjet.SetPtEtaPhiE((*jet_Pt)[topbjet], (*jet_Eta)[topbjet], (*jet_Phi)[topbjet], (*jet_En)[topbjet] ) ;
+	v_mu.SetPtEtaPhiE( (*mu_Pt)[mu], (*mu_Eta)[mu], (*mu_Phi)[mu], (*mu_En)[mu]);
+
+	float Et_top          =  v_top.Et() ;	
+	float Et_higgs        =  v_higgs.Et() ;
+	float Et_bjet          = v_topbjet.Et() ;
+	float Et_mu          = v_mu.Et() ;
+	double Et_sum       = 0.0 ;
+
+	float pT_top          =  (*AK8_JetPt)[top] ;
+	float pT_higgs       =  (*AK8_JetPt)[higgs] ;
+	float pT_bjet         =  (*jet_Pt)[topbjet] ;
+	float pT_mu         =  (*mu_Pt)[mu] ;
+	double pT_sum      =  0.0 ;
+	float  Dot_prod     =  0.0   ;
+	
+	double  W_Trans                = 0.0 ;
+	double  top_Trans                = 0.0 ;  
+	double  Higgs_Trans            = 0.0 ;
+	double  TprimEt_Trans        = 0.0 ;
+	double  trans_mass             = 0.0 ;
+
+	// for cos(deltaPhi) calculation  
+		
+	//============ w.r.t MET ======
+	float  dPhi            =  delta_phi((*mu_Phi)[mu] , pf_METPhi) ;   // for muon & MET dphi
+	MET_phi[0]          =  pf_MET * Cos(dPhi) ;
+
+	dPhi                   =  delta_phi((*jet_Phi)[topbjet] , pf_METPhi)  ;   //  for topbjet & MET dphi
+	MET_phi[1]          =  pf_MET * Cos(dPhi) ;
+
+	dPhi                   =  delta_phi((*AK8_JetPhi)[higgs] , pf_METPhi)  ;   //  for higgs & MET dphi
+	MET_phi[2]          =  pf_MET * Cos(dPhi) ;
+
+	dPhi                   =  delta_phi((*AK8_JetPhi)[top] , pf_METPhi)  ;   //  for top & MET dphi
+	MET_phi[3]          =  pf_MET * Cos(dPhi) ;
+
+
+  // ======= w.r.t each other ========
+	dPhi                   =  delta_phi((*AK8_JetPhi)[top], (*mu_Phi)[mu]) ;  ;   //  for top & muon dphi
+	Obj_phi[0]            =   pT_mu * Cos(dPhi) ;  
+	
+	dPhi                   =  delta_phi((*AK8_JetPhi)[top], (*AK8_JetPhi)[higgs])  ; //  for top & higgs dphi
+	Obj_phi[1]            =   pT_higgs * Cos(dPhi) ;
+	
+	dPhi                   =  delta_phi( (*AK8_JetPhi)[top], (*jet_Phi)[topbjet])  ; //  for W & higgs dphi
+	Obj_phi[2]            =   pT_bjet * Cos(dPhi) ;	
+
+	dPhi                   =  delta_phi((*jet_Phi)[topbjet], (*mu_Phi)[mu])  ;   //  for topbjet & muon dphi
+	Obj_phi[3]            =  pT_mu * Cos(dPhi) ;
+			
+	dPhi                   =  delta_phi((*jet_Phi)[topbjet], (*AK8_JetPhi)[higgs])  ; //  for topbjet & higgs dphi
+	Obj_phi[4]            =  pT_higgs * Cos(dPhi) ;
+		  
+	dPhi                   =  delta_phi((*AK8_JetPhi)[higgs], (*mu_Phi)[mu]) ; //  for higgs & muon dphi
+	Obj_phi[5]            =  pT_mu * Cos(dPhi) ;
+
+	
+	// ---------------Transverse mass---------------
+	//  for W transverse mass    
+	Et_sum = Et_sum + Et_mu  + pf_MET  ;
+	pT_sum  = pT_sum + ( pf_MET * pf_MET ) + (pT_mu * pT_mu) ;  
+	Dot_prod  =  Dot_prod +  2.0 * pT_mu * MET_phi[0] ;
+	W_Trans = fabs (( Et_sum * Et_sum) - ( pT_sum + Dot_prod) ) ;
+	trans_mass  = Sqrt ( W_Trans) ;
+	h_Histo_Mt.at(3).at(3) -> Fill( trans_mass) ;
+
+	//  for Higgs transverse mass 
+	Et_sum               =     Et_sum +   Et_higgs ;
+	pT_sum              =     pT_sum + ( pT_higgs* pT_higgs ) ;
+	Dot_prod            =     Dot_prod + 2.0 * pT_higgs *( MET_phi[2] + Obj_phi[5] ) ;
+	Higgs_Trans           =     fabs (( Et_sum * Et_sum)  - ( pT_sum + Dot_prod) )  ;
+	trans_mass          =    Sqrt ( Higgs_Trans) ;
+     h_Histo_Mt.at(3).at(2) -> Fill( trans_mass) ;
+
+	// for Tprime Transverse mass
+	Et_sum              =    Et_sum + Et_top + Et_bjet ;
+	pT_sum             =     pT_sum + (pT_top * pT_top) + (pT_bjet * pT_bjet);    
+	Dot_prod            =    Dot_prod +2.0 *pT_top* (MET_phi[3]+ Obj_phi[0]+ Obj_phi[1]+ Obj_phi[2]) +2.0 *pT_bjet* (MET_phi[1]+ Obj_phi[3]+ Obj_phi[4]) ;
+	TprimEt_Trans     =    fabs(( Et_sum * Et_sum)  - ( pT_sum + Dot_prod) ) ;
+	trans_mass         =     Sqrt ( TprimEt_Trans ) ;
+	h_Histo_Mt.at(3).at(0) -> Fill( trans_mass) ;
+    
+    // for Top transverse mass
+    Et_sum                        =     0.0 + Et_top + Et_bjet ;
+    pT_sum                       =     0.0 + (pT_top * pT_top) + (pT_bjet * pT_bjet);            
+    Dot_prod                     =     0.0  +  2.0 *pT_top* Obj_phi[2] ;
+     top_Trans                   =     fabs (( Et_sum * Et_sum)  - ( pT_sum + Dot_prod) )  ;
+	trans_mass                 =    Sqrt ( top_Trans) ;
+     h_Histo_Mt.at(3).at(1)   -> Fill( trans_mass) ;
+}
+
+
+void  lvb_qqqq_dCSV::toptag_MTCalculation( int Cat ) 
+{
+	int top = -1, W = -1, mu  = -1 ;
+	if ( Cat == 1) {
+          top = CatI_Objects[0];
+          W  = CatI_Objects[1];          
+          mu = CatI_Objects[2];          
+          }
+    else{
+          top = CatII_Objects[0];
+          W  = CatII_Objects[1];          
+          mu = CatII_Objects[2];                
+    }      
+    				
+	
 	TLorentzVector v_top, v_mu, v_W ;
 
 	v_top.SetPtEtaPhiE((*AK8_JetPt)[top], (*AK8_JetEta)[top], (*AK8_JetPhi)[top], (*AK8_JetEn)[top] ) ;
@@ -2457,15 +2792,17 @@ void  lvb_qqqq_dCSV::toptag_MTCalculation( )
 	Dot_prod  =  Dot_prod +  2.0 * pT_mu * MET_phi ;
 	W_Trans = fabs (( Et_sum * Et_sum) - ( pT_sum + Dot_prod) ) ;
 	trans_mass  = Sqrt ( W_Trans) ;
-	h_object_MT.at(0) -> Fill( trans_mass) ;
-
+	if (Cat == 1 ) h_Histo_Mt.at(0).at(2) -> Fill( trans_mass) ;
+	if (Cat == 2 ) h_Histo_Mt.at(1).at(2) -> Fill( trans_mass) ;
+	
 	// for Higgs Transverse mass
 	Et_sum               =     Et_sum +   Et_W ;
 	pT_sum              =     pT_sum + ( pT_W* pT_W ) ;
 	Dot_prod            =     Dot_prod + 2.0 * pT_W *( MET2_phi + mu_phi ) ;
 	Higgs_Trans        =     fabs (( Et_sum * Et_sum)  - ( pT_sum + Dot_prod) )  ;
 	trans_mass          =    Sqrt ( Higgs_Trans) ;
-	h_object_MT.at(1) -> Fill( trans_mass) ;
+	if (Cat == 1 ) h_Histo_Mt.at(0).at(1) -> Fill( trans_mass) ;
+	if (Cat == 2 ) h_Histo_Mt.at(1).at(1) -> Fill( trans_mass) ;
 
 	// for Tprime Transverse mass
 	Et_sum          = Et_sum + Et_top ;
@@ -2473,29 +2810,19 @@ void  lvb_qqqq_dCSV::toptag_MTCalculation( )
 	Dot_prod       =   Dot_prod + 2.0 * pT_top * ( MET3_phi + mu2_phi + W_phi ) ;
 	TprimEt_Trans =   fabs(( Et_sum * Et_sum)  - ( pT_sum + Dot_prod) ) ;
 	trans_mass  = Sqrt ( TprimEt_Trans ) ;
-	h_object_MT.at(2) -> Fill(trans_mass) ;
-
-	//  for top tag transverse mass              
-	double  MT_vec  = fabs ((Et_top * Et_top) - (pT_top * pT_top) ) ;
-	trans_mass  = Sqrt ( MT_vec) ;
-	h_object_MT.at(3) -> Fill(trans_mass) ;
-	MT_vec = 0.0 ;
-
-	// for Wboson transverse mass 
-	MT_vec  = fabs ((Et_W * Et_W) - (pT_W * pT_W) ) ;   
-	trans_mass  = Sqrt ( MT_vec) ;
-	h_object_MT.at(4) -> Fill(trans_mass) ;
+	if (Cat == 1 ) h_Histo_Mt.at(0).at(0) -> Fill( trans_mass) ;
+	if (Cat == 2 ) h_Histo_Mt.at(1).at(0) -> Fill( trans_mass) ;
 
 }
 
 
 // =========for Higgs tag Mt calculation =======================
 
-
-void  lvb_qqqq_dCSV::Higgstag_MTCalculation( int topbjet) 
+void  lvb_qqqq_dCSV::Higgstag_MTCalculation() 
 {
-	int higgs = Higgsjets[0] ;  
-	int mu = n_Mu[0] ;
+	int higgs = CatVI_Objects[1] ;  
+	int topbjet = CatVI_Objects[2] ;  	
+	int mu = CatVI_Objects[3] ;  	
 	TLorentzVector v_higgs, v_mu, v_topbjet ;
 
 	v_higgs.SetPtEtaPhiE((*AK8_JetPt)[higgs], (*AK8_JetEta)[higgs], (*AK8_JetPhi)[higgs], (*AK8_JetEn)[higgs] ) ;
@@ -2544,7 +2871,7 @@ void  lvb_qqqq_dCSV::Higgstag_MTCalculation( int topbjet)
 	Dot_prod  =  Dot_prod +  2.0 * pT_mu * MET_phi ;
 	W_Trans = fabs (( Et_sum * Et_sum) - ( pT_sum + Dot_prod) ) ;
 	trans_mass  = Sqrt ( W_Trans) ;
-	h_object_MT.at(0) -> Fill( trans_mass) ;
+	h_Histo_Mt.at(5).at(3) -> Fill( trans_mass) ;
 
 	//  for Top transverse mass 
 	Et_sum               =     Et_sum +   Et_bjet ;
@@ -2552,7 +2879,7 @@ void  lvb_qqqq_dCSV::Higgstag_MTCalculation( int topbjet)
 	Dot_prod            =     Dot_prod + 2.0 * pT_bjet *( MET2_phi + mu_phi ) ;
 	top_Trans           =     fabs (( Et_sum * Et_sum)  - ( pT_sum + Dot_prod) )  ;
 	trans_mass          =    Sqrt ( top_Trans) ;
-	h_object_MT.at(1) -> Fill( trans_mass) ;
+     h_Histo_Mt.at(5).at(2) -> Fill( trans_mass) ;
 
 	// for Tprime Transverse mass
 	Et_sum              = Et_sum + Et_higgs ;
@@ -2560,19 +2887,9 @@ void  lvb_qqqq_dCSV::Higgstag_MTCalculation( int topbjet)
 	Dot_prod            =   Dot_prod + 2.0 * pT_higgs * ( MET3_phi + mu2_phi + bjet_phi ) ;
 	TprimEt_Trans     =   fabs(( Et_sum * Et_sum)  - ( pT_sum + Dot_prod) ) ;
 	trans_mass         = Sqrt ( TprimEt_Trans ) ;
-	h_object_MT.at(2) -> Fill(trans_mass) ;
 
-	//  for higgs tag transverse mass              
-	double  MT_vec  = fabs ((Et_higgs * Et_higgs) - (pT_higgs * pT_higgs) ) ;
-	trans_mass  = Sqrt ( MT_vec) ;
-	h_object_MT.at(3) -> Fill(trans_mass) ;
-	MT_vec = 0.0 ;
-
-	/* for Wboson transverse mass 
-	   MT_vec  = fabs ((Et_W * Et_W) - (pT_W * pT_W) ) ;   
-	   trans_mass  = Sqrt ( MT_vec) ;
-	   h_object_MT.at(4) -> Fill(trans_mass) ;
-	 */                
+	h_Histo_Mt.at(5).at(1) -> Fill( trans_mass) ;
+	
 }
 
 
@@ -2713,12 +3030,7 @@ void  lvb_qqqq_dCSV::Higgs_lbjet_Plots() {
 		CatVI_Objects.push_back(j);				  //  muon at 2nd place & MET is global
 		CatVI_Objects_Plots();    
 	}
-	if ( Cat_pass  == "yes" ) {   
-		/*     
-		       Higgstag_MTCalculation( jet2) ;
-		       genlvl_MTCalculation(-1) ;  // for muon from top decayed W type
-		 */
-	}
+	
 
 } 
 
@@ -2781,9 +3093,6 @@ void  lvb_qqqq_dCSV::W_fatjet_Plots() {
 	if (  CatV_Objects.size() != 0 )  	CatV_Objects_Plots() ;       
 	if( CatIII_Objects.size() != 0 && CatV_Objects.size() == 0)     CatIII_Objects_Plots() ;
 
-	if ( Cat_pass  == "no" ) {          		
-		//		       genlvl_MTCalculation(1) ;    // for muon from Higgs decayed W type	
-	}    
 }
 
 
@@ -2842,12 +3151,9 @@ void  lvb_qqqq_dCSV::WW_lvbjet_Plots()
 		CatIV_Objects.push_back(j);				  //  muon at 3rd place & MET is global
 		CatIV_Objects_Plots();              
 	}
-	if ( Cat_pass  == "yes" ) {
-		/*        
-			  genlvl_MTCalculation(1) ;    // for muon from Higgs decayed W type 
-		 */
-	}
+	
 }
+
 //=======================Plotting Functions=====================
 
 void     lvb_qqqq_dCSV::CatI_Objects_Plots()
@@ -2882,7 +3188,7 @@ void     lvb_qqqq_dCSV::CatI_Objects_Plots()
 		}
 	}
 	//         genlvl_MTCalculation(1) ;
-	//     	toptag_MTCalculation() ;
+	     	toptag_MTCalculation(1) ; // for category I plots
 }     	
 
 
@@ -2919,7 +3225,7 @@ void     lvb_qqqq_dCSV::CatII_Objects_Plots()
 
 		}
 	}
-	//     	toptag_MTCalculation() ;
+	     	toptag_MTCalculation(2) ; // for category II plots
 }     	
 
 
@@ -2928,7 +3234,7 @@ void     lvb_qqqq_dCSV::CatIII_Objects_Plots()
 	int prtcl = -1, b2 = -1, j = -1 ;     
 	float dR = 0.0 ;                    
 	h_Histo_Pt.at(2).at(4)  -> Fill(pf_MET) ;    // for MET being  global & [cat).at(histono.]				     
-
+    WfatIII_MTCalculation( ) ;
 	for(int g = 0 ; g < CatIII_Objects.size(); g ++ )
 	{   
 		prtcl = CatIII_Objects[g] ;
@@ -2970,7 +3276,6 @@ void     lvb_qqqq_dCSV::CatIII_Objects_Plots()
 		}
 	}
 
-	//          Higgstag_MTCalculation( jet2) ;
 	//          genlvl_MTCalculation(-1) ;  // for muon from top decayed W type
 }  
 
@@ -2978,7 +3283,8 @@ void     lvb_qqqq_dCSV::CatIII_Objects_Plots()
 void     lvb_qqqq_dCSV::CatIV_Objects_Plots()
 {
 	int prtcl = -1, b2 = -1, j = -1 ;     
-	float dR = 0.0 ;                    
+	float dR = 0.0 ;            
+	WWtag_MTCalculation() ;        
 	h_Histo_Pt.at(3).at(4)  -> Fill(pf_MET) ;    // for MET being  global & [cat).at(histono.]				     
 
 	for(int g = 0 ; g < CatIV_Objects.size(); g ++ )
@@ -3022,7 +3328,6 @@ void     lvb_qqqq_dCSV::CatIV_Objects_Plots()
 		}
 	}
 
-	//          Higgstag_MTCalculation( jet2) ;
 	//          genlvl_MTCalculation(-1) ;  // for muon from top decayed W type
 }     	
 
@@ -3032,7 +3337,8 @@ void     lvb_qqqq_dCSV::CatV_Objects_Plots()
 	int prtcl = -1, b2 = -1, j = -1 ;     
 	float dR = 0.0 ;                    
 	h_Histo_Pt.at(4).at(4)  -> Fill(pf_MET) ;    // for MET being  global & [cat).at(histono.]				     
-
+     WfatV_MTCalculation( ) ;
+     
 	for(int g = 0 ; g < CatV_Objects.size(); g ++ )
 	{   
 		prtcl = CatV_Objects[g] ;
@@ -3074,7 +3380,6 @@ void     lvb_qqqq_dCSV::CatV_Objects_Plots()
 		}
 	}
 
-	//          Higgstag_MTCalculation( jet2) ;
 	//          genlvl_MTCalculation(-1) ;  // for muon from top decayed W type
 }  
 
@@ -3121,7 +3426,7 @@ void     lvb_qqqq_dCSV::CatVI_Objects_Plots()
 		}
 	}
 
-	//          Higgstag_MTCalculation( jet2) ;
+	          Higgstag_MTCalculation() ;
 	//          genlvl_MTCalculation(-1) ;  // for muon from top decayed W type
 }     	
 
@@ -3551,3 +3856,4 @@ Int_t lvb_qqqq_dCSV::Cut(Long64_t entry)
 	return 1;
 }
 #endif // #ifdef lvb_qqqq_dCSV_cxx
+
