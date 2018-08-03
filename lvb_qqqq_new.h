@@ -1923,7 +1923,7 @@ void  lvb_qqqq_dCSV::Top_selection( )  // tag = 0 for Higgs & tag = 1 for top, W
 		if ((*AK8_JetPt)[jt] < 400.0) continue ;
 		if (tau32 > 0.65 ) continue ;
 		if (tau32 < 0.02 ) continue ;
-		if ( SDmass <130.0 || SDmass > 210.0 ) continue ;
+		if ( SDmass <140.0 || SDmass > 210.0 ) continue ;
 
 		for(int jg = 0 ; jg < (*n_AK8puppiSDSJ)[jt] ; jg ++ )
 		{
